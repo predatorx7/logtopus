@@ -1,0 +1,29 @@
+.PHONY: build run test clean help coverage
+
+APP_NAME = logtopus
+CLI_NAME = apikey-gen
+BUILD_DIR = build/bin
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+build: ## Build the ingestion service and CLI tool
+	@mkdir -p $(BUILD_DIR)
+	go build -o $(BUILD_DIR)/$(APP_NAME) ./cmd/ingestor
+	go build -o $(BUILD_DIR)/$(CLI_NAME) ./cmd/apikey-gen
+	@echo "Build complete. Binaries in $(BUILD_DIR)/"
+
+run: build ## Run the ingestion service locally
+	@if [ ! -f .env ]; then echo "WARNING: .env file not found, using defaults"; fi
+	./$(BUILD_DIR)/$(APP_NAME)
+
+test: ## Run unit tests
+	go test -v ./...
+
+coverage: ## Run tests with coverage and display report
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+	@echo "Coverage report generated: coverage.out"
+
+clean: ## Remove build artifacts
+	rm -rf $(BUILD_DIR) coverage.out logs/

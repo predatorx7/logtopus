@@ -1,0 +1,8 @@
+build/
+dist/
+.env
+.DS_Store
+logs/
+bin/
+coverage.out
+go.sum
