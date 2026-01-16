@@ -81,6 +81,16 @@ func main() {
 		http.ServeFile(w, r, "public/openapi/openapi.base.yaml")
 	})
 
+	startTime := time.Now()
+	r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
+		status := map[string]interface{}{
+			"status": "ok",
+			"uptime": time.Since(startTime).String(),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(status)
+	})
+
 	r.Get("/v1/logs", func(w http.ResponseWriter, r *http.Request) {
 		// Parse Query Params
 		params := storage.QueryParams{}

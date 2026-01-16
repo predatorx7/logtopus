@@ -2,7 +2,18 @@ openapi: 3.0.0
 info:
   title: Logtopus Ingestion API
   version: 1.0.0
-  description: High-performance log ingestion API.
+  description: |
+    High-performance log ingestion API.
+    Project repository: https://github.com/predatorx7/logtopus
+  contact:
+    name: Logtopus Maintainer
+    url: https://github.com/predatorx7
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  x-logo:
+    url: '/logtopus.png'
+    altText: 'Logtopus'
 
 servers:
   - url: http://localhost:8080
@@ -45,7 +56,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './openapi.base.yaml#/components/schemas/StatusResponse'
+                $ref: './openapi.base.yaml#/components/schemas/IngestorStatusResponse'
 
 components:
   securitySchemes:

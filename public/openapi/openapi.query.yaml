@@ -2,7 +2,18 @@ openapi: 3.0.0
 info:
   title: Logtopus Query API
   version: 1.0.0
-  description: API to query logs from various storage backends.
+  description: |
+    API to query logs from various storage backends.
+    Project repository: https://github.com/predatorx7/logtopus
+  contact:
+    name: Logtopus Maintainer
+    url: https://github.com/predatorx7
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  x-logo:
+    url: '/logtopus.png'
+    altText: 'Logtopus'
 
 servers:
   - url: http://localhost:8081
@@ -64,3 +75,16 @@ paths:
           description: Invalid parameters
         '500':
           description: Internal Server Error
+
+  /status:
+    get:
+      summary: Get service status
+      operationId: getStatus
+      description: Returns internal metrics and uptime.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: './openapi.base.yaml#/components/schemas/QueryStatusResponse'
