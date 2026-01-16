@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/predatorx7/logtopus/pkg/model"
+	"github.com/predatorx7/logtopus/pkg/subscriber/clickhouse"
 )
 
 // MockSubscriberBroker
@@ -74,7 +75,7 @@ func TestClickHouseSubscriber(t *testing.T) {
 	ch := make(chan []model.LogEntry, 1)
 	mockBroker := &MockSubscriberBroker{SubCh: ch}
 
-	sub := NewClickHouseSubscriber(mockBroker, "mock-dsn")
+	sub := clickhouse.NewSubscriber(mockBroker, "mock-dsn")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()

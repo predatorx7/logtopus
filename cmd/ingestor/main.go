@@ -13,6 +13,7 @@ import (
 	"github.com/predatorx7/logtopus/pkg/auth"
 	"github.com/predatorx7/logtopus/pkg/broker"
 	"github.com/predatorx7/logtopus/pkg/subscriber"
+	"github.com/predatorx7/logtopus/pkg/subscriber/clickhouse"
 )
 
 func main() {
@@ -37,9 +38,9 @@ func main() {
 	if os.Getenv("ENABLE_CLICKHOUSE") == "true" {
 		dsn := os.Getenv("CLICKHOUSE_DSN")
 		if dsn == "" {
-			dsn = "tcp://localhost:9000"
+			dsn = "clickhouse://default:password@localhost:9000/logtopus?debug=true"
 		}
-		chSub := subscriber.NewClickHouseSubscriber(logBroker, dsn)
+		chSub := clickhouse.NewSubscriber(logBroker, dsn)
 		go func() {
 			if err := chSub.Start(context.Background()); err != nil {
 				log.Printf("ClickHouse subscriber exited with error: %v", err)
