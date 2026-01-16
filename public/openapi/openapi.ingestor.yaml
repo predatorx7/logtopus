@@ -9,8 +9,8 @@ info:
     name: Logtopus Maintainer
     url: https://github.com/predatorx7
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: BSD-3-Clause license (https://opensource.org/licenses/BSD-3-Clause)
+    url: https://github.com/predatorx7/logtopus/blob/main/LICENSE
   x-logo:
     url: '/logtopus.png'
     altText: 'Logtopus'

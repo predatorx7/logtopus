@@ -120,9 +120,35 @@ curl "http://localhost:8081/v1/logs?limit=5"
 curl "http://localhost:8081/v1/logs?subscriber_type=file&limit=5"
 ```
 
+
+### Advanced Querying
+
+**Filters (Case-Insensitive):**
+- `level`: Filter by log level (e.g., `info`, `ERROR`).
+- `search`: Text search in message body.
+- `session_id`: Exact match for Session ID.
+- `client_id`: Exact match for Client ID.
+- `source`: Partial match for Source.
+- `error`: Partial match for Error.
+
+**Context Retrieval (File & ClickHouse):**
+Fetch surrounding logs to understand the sequence of events.
+**Prerequisite:** Queries using context MUST include `session_id` OR `client_id` for accurate reconstruction.
+
+- `context=N`: Fetch N lines before and N lines after the match.
+- `before_context=N`: Fetch N lines before.
+- `after_context=N`: Fetch N lines after.
+- **Limit**: Max 1000 lines.
+
+**Example:**
+```bash
+# Find ERROR logs with "database" and show 5 lines of context
+curl "http://localhost:8081/v1/logs?level=error&search=database&context=5"
+```
+
 ### Documentation
-- Ingest API: `http://localhost:8080/openapi.yaml`
-- Query API: `http://localhost:8081/openapi.yaml`
+- Ingest API: `http://localhost:8080/openapi` (Swagger UI)
+- Query API: `http://localhost:8081/openapi` (Swagger UI)
 
 ## Development Commands
 The `Makefile` provides several helpers:

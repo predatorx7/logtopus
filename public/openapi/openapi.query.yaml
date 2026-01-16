@@ -9,8 +9,8 @@ info:
     name: Logtopus Maintainer
     url: https://github.com/predatorx7
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: BSD-3-Clause license (https://opensource.org/licenses/BSD-3-Clause)
+    url: https://github.com/predatorx7/logtopus/blob/main/LICENSE
   x-logo:
     url: '/logtopus.png'
     altText: 'Logtopus'
@@ -56,12 +56,53 @@ paths:
           in: query
           schema:
             type: string
-          description: Filter by log level.
+          description: Filter by log level (case-insensitive).
         - name: search
           in: query
           schema:
             type: string
-          description: Text search in message field.
+          description: Text search in message field (case-insensitive).
+        - name: session_id
+          in: query
+          schema:
+            type: string
+          description: Filter by Session ID (exact match, case-insensitive).
+        - name: client_id
+          in: query
+          schema:
+            type: string
+          description: Filter by Client ID (exact match, case-insensitive).
+        - name: source
+          in: query
+          schema:
+            type: string
+          description: Filter by Source (contains, case-insensitive).
+        - name: error
+          in: query
+          schema:
+            type: string
+          description: Filter by Error (contains, case-insensitive).
+        - name: before_context
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 1000
+          description: Number of lines to include before the match. Requires session_id or client_id.
+        - name: after_context
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 1000
+          description: Number of lines to include after the match. Requires session_id or client_id.
+        - name: context
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 1000
+          description: Number of lines to include before and after the match. Requires session_id or client_id.
       responses:
         '200':
           description: List of logs

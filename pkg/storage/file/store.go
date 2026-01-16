@@ -113,6 +113,10 @@ func (s *FileStore) scanFile(ctx context.Context, path string, params storage.Qu
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, 1024*1024)
 
+	// Context buffers
+	ringBuffer := make([]model.LogEntry, 0, params.Before+1)
+	afterCount := 0
+
 	for scanner.Scan() {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -124,8 +128,36 @@ func (s *FileStore) scanFile(ctx context.Context, path string, params storage.Qu
 			continue // skip malformed
 		}
 
-		if match(entry, params) {
+		isMatch := match(entry, params)
+
+		if isMatch {
+			// Found a match!
+			// 1. Flush ring buffer (before context)
+			matches = append(matches, ringBuffer...)
+			ringBuffer = ringBuffer[:0] // clear buffer
+
+			// 2. Add the clean match
 			matches = append(matches, entry)
+
+			// 3. Reset after counter
+			afterCount = params.After
+		} else {
+			// Not a match
+			if afterCount > 0 {
+				// We are in the "after" context of a previous match
+				matches = append(matches, entry)
+				afterCount--
+			}
+
+			// We also buffer for potential future "before" context
+			// Even if it was used as "after" context for a previous match
+			if params.Before > 0 {
+				if len(ringBuffer) >= params.Before {
+					// Slide buffer: drop oldest (index 0)
+					ringBuffer = ringBuffer[1:]
+				}
+				ringBuffer = append(ringBuffer, entry)
+			}
 		}
 	}
 
@@ -133,17 +165,29 @@ func (s *FileStore) scanFile(ctx context.Context, path string, params storage.Qu
 }
 
 func match(entry model.LogEntry, params storage.QueryParams) bool {
+
 	if !params.StartTime.IsZero() && entry.Time.Before(params.StartTime) {
 		return false
 	}
 	if !params.EndTime.IsZero() && entry.Time.After(params.EndTime) {
 		return false
 	}
-	if params.Level != "" && string(entry.Level) != params.Level {
+	if params.Level != "" && !strings.EqualFold(string(entry.Level), params.Level) {
 		return false
 	}
 	if params.Search != "" && !strings.Contains(strings.ToLower(entry.Message), strings.ToLower(params.Search)) {
-		// Simple containment check
+		return false
+	}
+	if params.SessionID != "" && !strings.EqualFold(entry.SessionID, params.SessionID) {
+		return false
+	}
+	if params.ClientID != "" && !strings.EqualFold(entry.ClientID, params.ClientID) {
+		return false
+	}
+	if params.Source != "" && !strings.Contains(strings.ToLower(entry.Source), strings.ToLower(params.Source)) {
+		return false
+	}
+	if params.Error != "" && !strings.Contains(strings.ToLower(entry.Error), strings.ToLower(params.Error)) {
 		return false
 	}
 	return true

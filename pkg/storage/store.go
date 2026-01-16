@@ -14,6 +14,12 @@ type QueryParams struct {
 	Limit     int
 	Level     string
 	Search    string
+	SessionID string
+	ClientID  string
+	Source    string
+	Error     string
+	Before    int
+	After     int
 }
 
 // LogStore defines the interface for querying logs from a storage backend

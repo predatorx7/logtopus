@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -55,12 +56,28 @@ func (s *ClickHouseStore) Query(ctx context.Context, params storage.QueryParams)
 		args = append(args, params.EndTime)
 	}
 	if params.Level != "" {
-		query += " AND level = ?"
+		query += " AND lower(level) = lower(?)"
 		args = append(args, params.Level)
 	}
 	if params.Search != "" {
 		query += " AND message ILIKE ?" // ClickHouse ILIKE for case-insensitive
 		args = append(args, "%"+params.Search+"%")
+	}
+	if params.SessionID != "" {
+		query += " AND lower(session_id) = lower(?)"
+		args = append(args, params.SessionID)
+	}
+	if params.ClientID != "" {
+		query += " AND lower(client_id) = lower(?)"
+		args = append(args, params.ClientID)
+	}
+	if params.Source != "" {
+		query += " AND source ILIKE ?"
+		args = append(args, "%"+params.Source+"%")
+	}
+	if params.Error != "" {
+		query += " AND error ILIKE ?"
+		args = append(args, "%"+params.Error+"%")
 	}
 
 	query += " ORDER BY timestamp DESC"
@@ -72,47 +89,121 @@ func (s *ClickHouseStore) Query(ctx context.Context, params storage.QueryParams)
 		query += " LIMIT 100"
 	}
 
+	// 1. Initial Query
 	rows, err := s.conn.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
-	var logs []model.LogEntry
+	var initialEntries []model.LogEntry
 	for rows.Next() {
-		var entry model.LogEntry
-		var objStr, extraStr string
-		var levelStr string
-
-		if err := rows.Scan(
-			&entry.Time,
-			&levelStr,
-			&entry.Message,
-			&objStr,
-			&extraStr,
-			&entry.LoggerName,
-			&entry.Sequence,
-			&entry.Error,
-			&entry.Stacktrace,
-			&entry.SessionID,
-			&entry.ClientID,
-			&entry.Source,
-			&entry.ClientIP,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan row: %w", err)
+		entry, err := scanRow(rows)
+		if err != nil {
+			return nil, err
 		}
+		initialEntries = append(initialEntries, entry)
+	}
+	rows.Close()
 
-		entry.Level = model.LogLevel(levelStr)
+	// 2. Fetch Context if needed
+	if (params.Before > 0 || params.After > 0) && len(initialEntries) > 0 {
+		finalResults := make([]model.LogEntry, 0, len(initialEntries)*(params.Before+params.After+1))
 
-		if objStr != "" {
-			_ = json.Unmarshal([]byte(objStr), &entry.Object)
+		for _, match := range initialEntries {
+			// Construct base WHERE clause for context anchors
+			whereClauses := []string{}
+			args := []interface{}{}
+
+			if params.SessionID != "" {
+				whereClauses = append(whereClauses, "session_id = ?")
+				args = append(args, match.SessionID)
+			}
+			if params.ClientID != "" {
+				whereClauses = append(whereClauses, "client_id = ?")
+				args = append(args, match.ClientID)
+			}
+
+			baseWhere := strings.Join(whereClauses, " AND ")
+			if baseWhere == "" {
+				// Should be caught by validation, but safe fallback
+				continue
+			}
+
+			// Fetch Before
+			if params.Before > 0 {
+				beforeArgs := append(append([]interface{}{}, args...), match.Time, params.Before)
+				beforeQuery := fmt.Sprintf(`SELECT timestamp, level, message, object, extra, logger_name, sequence, error, stacktrace, session_id, client_id, source, client_ip FROM %s.logs WHERE %s AND timestamp < ? ORDER BY timestamp DESC LIMIT ?`, s.db, baseWhere)
+
+				beforeRows, err := s.conn.Query(ctx, beforeQuery, beforeArgs...)
+				if err == nil {
+					var beforeCtx []model.LogEntry
+					for beforeRows.Next() {
+						e, _ := scanRow(beforeRows)
+						beforeCtx = append(beforeCtx, e)
+					}
+					beforeRows.Close()
+					// Reverse to restore chronological order (older -> newer)
+					for i := len(beforeCtx) - 1; i >= 0; i-- {
+						finalResults = append(finalResults, beforeCtx[i])
+					}
+				}
+			}
+
+			// Add Match
+			finalResults = append(finalResults, match)
+
+			// Fetch After
+			if params.After > 0 {
+				afterArgs := append(append([]interface{}{}, args...), match.Time, params.After)
+				afterQuery := fmt.Sprintf(`SELECT timestamp, level, message, object, extra, logger_name, sequence, error, stacktrace, session_id, client_id, source, client_ip FROM %s.logs WHERE %s AND timestamp > ? ORDER BY timestamp ASC LIMIT ?`, s.db, baseWhere)
+
+				afterRows, err := s.conn.Query(ctx, afterQuery, afterArgs...)
+				if err == nil {
+					for afterRows.Next() {
+						e, _ := scanRow(afterRows)
+						finalResults = append(finalResults, e)
+					}
+					afterRows.Close()
+				}
+			}
 		}
-		if extraStr != "" {
-			_ = json.Unmarshal([]byte(extraStr), &entry.Extra)
-		}
-
-		logs = append(logs, entry)
+		return finalResults, nil
 	}
 
-	return logs, nil
+	return initialEntries, nil
+}
+
+func scanRow(rows driver.Rows) (model.LogEntry, error) {
+	var entry model.LogEntry
+	var objStr, extraStr string
+	var levelStr string
+
+	if err := rows.Scan(
+		&entry.Time,
+		&levelStr,
+		&entry.Message,
+		&objStr,
+		&extraStr,
+		&entry.LoggerName,
+		&entry.Sequence,
+		&entry.Error,
+		&entry.Stacktrace,
+		&entry.SessionID,
+		&entry.ClientID,
+		&entry.Source,
+		&entry.ClientIP,
+	); err != nil {
+		return entry, fmt.Errorf("failed to scan row: %w", err)
+	}
+
+	entry.Level = model.LogLevel(levelStr)
+
+	if objStr != "" {
+		_ = json.Unmarshal([]byte(objStr), &entry.Object)
+	}
+	if extraStr != "" {
+		_ = json.Unmarshal([]byte(extraStr), &entry.Extra)
+	}
+	return entry, nil
 }

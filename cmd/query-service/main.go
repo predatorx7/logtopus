@@ -126,6 +126,42 @@ func main() {
 		}
 		params.Level = r.URL.Query().Get("level")
 		params.Search = r.URL.Query().Get("search")
+		params.SessionID = r.URL.Query().Get("session_id")
+		params.ClientID = r.URL.Query().Get("client_id")
+		params.Source = r.URL.Query().Get("source")
+		params.Error = r.URL.Query().Get("error")
+
+		// Context parsing
+		if ctxStr := r.URL.Query().Get("context"); ctxStr != "" {
+			if n, err := strconv.Atoi(ctxStr); err == nil {
+				params.Before = n
+				params.After = n
+			}
+		}
+		if beforeStr := r.URL.Query().Get("before_context"); beforeStr != "" {
+			if n, err := strconv.Atoi(beforeStr); err == nil {
+				params.Before = n
+			}
+		}
+		if afterStr := r.URL.Query().Get("after_context"); afterStr != "" {
+			if n, err := strconv.Atoi(afterStr); err == nil {
+				params.After = n
+			}
+		}
+
+		// Validate context limits
+		if params.Before > 1000 {
+			params.Before = 1000
+		}
+		if params.After > 1000 {
+			params.After = 1000
+		}
+
+		// Context retrieval requires specific anchors
+		if (params.Before > 0 || params.After > 0) && (params.SessionID == "" && params.ClientID == "") {
+			http.Error(w, "Context retrieval requires session_id or client_id", http.StatusBadRequest)
+			return
+		}
 
 		logs, err := targetStore.Query(r.Context(), params)
 		if err != nil {
