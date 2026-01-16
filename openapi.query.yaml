@@ -1,0 +1,66 @@
+openapi: 3.0.0
+info:
+  title: Logtopus Query API
+  version: 1.0.0
+  description: API to query logs from various storage backends.
+
+servers:
+  - url: http://localhost:8081
+    description: Query Service (Local)
+
+paths:
+  /v1/logs:
+    get:
+      summary: Query logs
+      operationId: queryLogs
+      parameters:
+        - name: subscriber_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [clickhouse, file]
+            default: clickhouse
+          description: Storage backend to query.
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs after this time (inclusive).
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Filter logs before this time (inclusive).
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 10000
+          description: Maximum number of logs to return.
+        - name: level
+          in: query
+          schema:
+            type: string
+          description: Filter by log level.
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Text search in message field.
+      responses:
+        '200':
+          description: List of logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './openapi.yaml#/components/schemas/LogEntry'
+        '400':
+          description: Invalid parameters
+        '500':
+          description: Internal Server Error

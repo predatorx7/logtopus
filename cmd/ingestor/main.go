@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/predatorx7/logtopus/pkg/auth"
 	"github.com/predatorx7/logtopus/pkg/broker"
-	"github.com/predatorx7/logtopus/pkg/subscriber"
 	"github.com/predatorx7/logtopus/pkg/subscriber/clickhouse"
+	"github.com/predatorx7/logtopus/pkg/subscriber/file"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 		if outDir == "" {
 			outDir = "./logs"
 		}
-		fileSub := subscriber.NewFileSubscriber(logBroker, outDir)
+		fileSub := file.NewSubscriber(logBroker, outDir)
 		go func() {
 			if err := fileSub.Start(context.Background()); err != nil {
 				log.Printf("File subscriber exited with error: %v", err)
@@ -71,6 +71,11 @@ func main() {
 	handler := NewHandler(logBroker, verifier)
 	r.Post("/v1/logs", handler.HandleLogs)
 	r.Get("/status", HandleStatus(logBroker))
+
+	// Serve OpenAPI Spec
+	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "openapi.ingestor.yaml")
+	})
 
 	// 4. Start Server
 	port := os.Getenv("PORT")

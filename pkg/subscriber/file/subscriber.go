@@ -1,4 +1,4 @@
-package subscriber
+package file
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type FileSubscriber struct {
 	mu        sync.Mutex
 }
 
-func NewFileSubscriber(b broker.Subscriber, outDir string) *FileSubscriber {
+func NewSubscriber(b broker.Subscriber, outDir string) *FileSubscriber {
 	return &FileSubscriber{
 		Broker:    b,
 		OutputDir: outDir,

@@ -29,36 +29,30 @@ func NewSubscriber(b broker.Subscriber, dsn string) *Subscriber {
 func (s *Subscriber) Start(ctx context.Context) error {
 	log.Println("Starting ClickHouse Subscriber...")
 
-	// Parse DSN explicitly or just use ParseDSN from the driver if available,
-	// but v2 usually prefers Options. For simplicity, let's try ParseDSN
-	// or assume the users passes a valid DSN string that the driver accepts
-	// via correct config parsing manually if needed.
-	// However, `clickhouse.Open` takes `*clickhouse.Options`.
-	// The user provided a TCP DSN in env: tcp://clickhouse:9000?debug=true
-	// We should probably rely on a helper or basic parsing.
-	// Let's assume for now we construct options from the DSN string logic
-	// or specific env vars if the DSN parsing is complex.
-	// Actually, v2 driver has Open method that usually takes Options.
-	// We might need to handle connection string -> Options manually or simplify
-	// by hardcoding for this Docker environment if parsing is tricky.
-	// But let's try to use minimal options based on common env vars.
+	// Connection retry loop
+	for {
+		opts, err := clickhouse.ParseDSN(s.DSN)
+		if err != nil {
+			return fmt.Errorf("failed to parse DSN: %w", err)
+		}
 
-	// NOTE: For robust DSN parsing we might need a helper.
-	// But strictly following instruction:
-	opts, err := clickhouse.ParseDSN(s.DSN)
-	if err != nil {
-		return fmt.Errorf("failed to parse DSN: %w", err)
-	}
+		conn, err := clickhouse.Open(opts)
+		if err == nil {
+			if err = conn.Ping(ctx); err == nil {
+				s.conn = conn
+				log.Println("ClickHouse Subscriber connected successfully")
+				break
+			}
+		}
 
-	conn, err := clickhouse.Open(opts)
-	if err != nil {
-		return fmt.Errorf("failed to open clickhouse connection: %w", err)
+		log.Printf("ClickHouse Connection failed: %v. Retrying in 5s...", err)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(5 * time.Second):
+			continue
+		}
 	}
-
-	if err := conn.Ping(ctx); err != nil {
-		return fmt.Errorf("failed to ping clickhouse: %w", err)
-	}
-	s.conn = conn
 
 	ch, err := s.Broker.Subscribe(ctx)
 	if err != nil {

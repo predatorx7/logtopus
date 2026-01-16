@@ -9,6 +9,7 @@ import (
 
 	"github.com/predatorx7/logtopus/pkg/model"
 	"github.com/predatorx7/logtopus/pkg/subscriber/clickhouse"
+	"github.com/predatorx7/logtopus/pkg/subscriber/file"
 )
 
 // MockSubscriberBroker
@@ -28,7 +29,7 @@ func TestFileSubscriber(t *testing.T) {
 	ch := make(chan []model.LogEntry, 1)
 	mockBroker := &MockSubscriberBroker{SubCh: ch}
 
-	sub := NewFileSubscriber(mockBroker, tmpDir)
+	sub := file.NewSubscriber(mockBroker, tmpDir)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go sub.Start(ctx)
