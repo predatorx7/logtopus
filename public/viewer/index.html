@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Logtopus Viewer" />
+    <title>Logtopus Viewer</title>
+    <link rel="icon" type="image/png" href="/logtopus.png" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <header>
+        <img src="/logtopus.png" height="32" width="32" alt="Logtopus" />
+        <div class="controls">
+            <input id="search" placeholder="Search..." style="min-width: 200px;" />
+            <select id="level">
+                <option value="">Level: All</option>
+                <option value="INFO">INFO</option>
+                <option value="ERROR">ERROR</option>
+                <option value="WARN">WARN</option>
+                <option value="DEBUG">DEBUG</option>
+            </select>
+            <input id="session_id" placeholder="Session ID" />
+            <input id="client_id" placeholder="Client ID" />
+
+            <div style="width:1px; height:24px; background:var(--border-color); margin:0 4px"></div>
+
+            <div class="input-group" title="Context (Before/After)">
+                <label for="context">Ctx</label>
+                <input id="context" type="number" min="0" max="100" placeholder="-" />
+            </div>
+            <div class="input-group" title="Before Context">
+                <label for="before_context">Pre</label>
+                <input id="before_context" type="number" min="0" max="100" placeholder="-" />
+            </div>
+            <div class="input-group" title="After Context">
+                <label for="after_context">Post</label>
+                <input id="after_context" type="number" min="0" max="100" placeholder="-" />
+            </div>
+
+            <div style="width:1px; height:24px; background:var(--border-color); margin:0 4px"></div>
+
+            <select id="subscriber_type">
+                <option value="file">Store: File</option>
+                <option value="clickhouse">Store: ClickHouse</option>
+            </select>
+            <select id="limit">
+                <option value="100">100</option>
+                <option value="1000" selected>1000</option>
+                <option value="5000">5000</option>
+            </select>
+            <button id="btn-refresh" class="primary">Search</button>
+        </div>
+    </header>
+
+    <div id="scroll-container" class="viewer-container">
+        <div id="virtual-spacer" class="virtual-spacer"></div>
+        <div id="log-list" class="log-list">
+            <!-- Logs rendered here -->
+            <div style="padding:4rem; text-align:center; color:#888; font-size:14px">
+                Start by initiating a search...
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Dialog -->
+    <div id="dialog-overlay" class="dialog-overlay">
+        <div class="dialog">
+            <div class="dialog-header">
+                <div class="dialog-title">
+                    <h2>Log Details</h2>
+                    <p>View full log entry properties</p>
+                </div>
+                <button id="btn-close">Close</button>
+            </div>
+            <div id="dialog-body" class="dialog-body">
+                <!-- Details -->
+            </div>
+            <div class="dialog-footer">
+                <button id="btn-copy">Copy JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

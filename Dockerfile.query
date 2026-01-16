@@ -13,7 +13,12 @@ FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/query-service .
 RUN mkdir -p /app/public/openapi
+
 COPY public/logtopus.png /app/public/
+
+RUN mkdir -p /app/public/viewer
+COPY public/viewer/ /app/public/viewer/
+
 COPY public/openapi/openapi.html /app/public/openapi/
 COPY public/openapi/openapi.query.yaml /app/public/openapi/
 COPY public/openapi/openapi.base.yaml /app/public/openapi/

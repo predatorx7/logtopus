@@ -146,9 +146,11 @@ Fetch surrounding logs to understand the sequence of events.
 curl "http://localhost:8081/v1/logs?level=error&search=database&context=5"
 ```
 
-### Documentation
-- Ingest API: `http://localhost:8080/openapi` (Swagger UI)
-- Query API: `http://localhost:8081/openapi` (Swagger UI)
+### Web Interface
+- **Log Viewer**: `http://localhost:8081/viewer/`
+  - A modern, web-based log viewer with virtual scrolling, search, and filtering capabilities.
+- **Ingest API Docs**: `http://localhost:8080/openapi` (Swagger UI)
+- **Query API Docs**: `http://localhost:8081/openapi` (Swagger UI)
 
 ## Development Commands
 The `Makefile` provides several helpers:

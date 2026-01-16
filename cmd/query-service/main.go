@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -66,6 +67,11 @@ func main() {
 	r.Get("/logtopus.png", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "public/logtopus.png")
 	})
+
+	// Serve Viewer
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, "public/viewer"))
+	r.Handle("/viewer/*", http.StripPrefix("/viewer", http.FileServer(filesDir)))
 
 	// Serve Swagger UI
 	r.Get("/openapi", func(w http.ResponseWriter, r *http.Request) {
