@@ -77,6 +77,11 @@ func main() {
 		http.ServeFile(w, r, "public/logtopus.png")
 	})
 
+	// Serve Swagger UI
+	r.Get("/openapi", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/openapi/openapi.html")
+	})
+
 	// Serve OpenAPI Spec
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "public/openapi/openapi.ingestor.yaml")
