@@ -12,7 +12,10 @@ RUN go build -o ingestor ./cmd/ingestor
 FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/ingestor .
-COPY openapi.ingestor.yaml .
+RUN mkdir -p /app/public/openapi
+COPY public/logtopus.png /app/public/
+COPY public/openapi/openapi.ingestor.yaml /app/public/openapi/
+COPY public/openapi/openapi.base.yaml /app/public/openapi/
 
 EXPOSE 8080
 CMD ["./ingestor"]

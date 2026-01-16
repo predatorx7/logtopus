@@ -72,9 +72,18 @@ func main() {
 	r.Post("/v1/logs", handler.HandleLogs)
 	r.Get("/status", HandleStatus(logBroker))
 
+	// Serve Static Files
+	r.Get("/logtopus.png", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/logtopus.png")
+	})
+
 	// Serve OpenAPI Spec
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "openapi.ingestor.yaml")
+		http.ServeFile(w, r, "public/openapi/openapi.ingestor.yaml")
+	})
+
+	r.Get("/openapi.base.yaml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/openapi/openapi.base.yaml")
 	})
 
 	// 4. Start Server

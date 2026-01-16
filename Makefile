@@ -13,6 +13,7 @@ build: ## Build the ingestion service and CLI tool
 	go build -o $(BUILD_DIR)/$(CLI_NAME) ./cmd/apikey-gen
 	go build -o $(BUILD_DIR)/setup-db ./cmd/setup-db
 	go build -o $(BUILD_DIR)/query-service ./cmd/query-service
+	cp -r public $(BUILD_DIR)/
 	@echo "Build complete. Binaries in $(BUILD_DIR)/"
 
 run: build ## Run the ingestion service locally

@@ -1,0 +1,55 @@
+openapi: 3.0.0
+
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        uptime:
+          type: string
+          example: "2m30s"
+        ingested_logs:
+          type: integer
+          format: int64
+        dropped_logs:
+          type: integer
+          format: int64
+
+    LogEntry:
+      type: object
+      required:
+        - message
+      properties:
+        level:
+          type: string
+          enum: [FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE]
+          default: INFO
+        message:
+          type: string
+        logger_name:
+          type: string
+        time:
+          type: string
+          format: date-time
+        sequence:
+          type: integer
+          format: int64
+        session_id:
+          type: string
+        client_id:
+          type: string
+        source:
+          type: string
+        object:
+          type: object
+          additionalProperties: true
+        extra:
+          type: object
+          additionalProperties: true
+        error:
+          type: string
+        stacktrace:
+          type: string

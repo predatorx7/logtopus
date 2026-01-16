@@ -59,7 +59,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: './openapi.yaml#/components/schemas/LogEntry'
+                  $ref: './openapi.base.yaml#/components/schemas/LogEntry'
         '400':
           description: Invalid parameters
         '500':

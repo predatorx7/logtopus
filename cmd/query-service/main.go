@@ -62,9 +62,18 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RealIP)
 
+	// Serve Static Files
+	r.Get("/logtopus.png", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/logtopus.png")
+	})
+
 	// Serve OpenAPI Spec
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "openapi.query.yaml")
+		http.ServeFile(w, r, "public/openapi/openapi.query.yaml")
+	})
+
+	r.Get("/openapi.base.yaml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/openapi/openapi.base.yaml")
 	})
 
 	r.Get("/v1/logs", func(w http.ResponseWriter, r *http.Request) {
